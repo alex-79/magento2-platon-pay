@@ -10,7 +10,7 @@
     "type": "magento2-module",
     "version": "100.0.5",
     "license": [
-        "GPLv2"
+        "GPL-2.0-or-later"
     ],
     "autoload": {
         "files": [ "registration.php" ],
