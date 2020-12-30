@@ -1,0 +1,159 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Copyright © 2016 Magento. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+-->
+
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+    <!-- Payment Method Facade configuration -->
+    <virtualType name="PlatonPayFacade" type="Magento\Payment\Model\Method\Adapter">
+        <arguments>
+            <argument name="code" xsi:type="const">\Platon\PlatonPay\Model\Ui\ConfigProvider::CODE</argument>
+            <argument name="formBlockType" xsi:type="string">Magento\Payment\Block\Form</argument>
+            <argument name="infoBlockType" xsi:type="string">Platon\PlatonPay\Block\Info</argument>
+            <argument name="valueHandlerPool" xsi:type="object">PlatonPayValueHandlerPool</argument>
+            <argument name="commandPool" xsi:type="object">PlatonPayCommandPool</argument>
+        </arguments>
+    </virtualType>
+
+    <!-- Configuration reader -->
+    <virtualType name="PlatonPayConfig" type="Magento\Payment\Gateway\Config\Config">
+        <arguments>
+            <argument name="methodCode" xsi:type="const">\Platon\PlatonPay\Model\Ui\ConfigProvider::CODE</argument>
+        </arguments>
+    </virtualType>
+
+    <!-- Logger, initialized with PlatonPayConfig -->
+    <virtualType name="PlatonPayLogger" type="Magento\Payment\Model\Method\Logger">
+        <arguments>
+            <argument name="config" xsi:type="object">PlatonPayConfig</argument>
+        </arguments>
+    </virtualType>
+
+    <type name="Platon\PlatonPay\Gateway\Http\Client\ClientMock">
+        <arguments>
+            <argument name="logger" xsi:type="object">PlatonPayLogger</argument>
+        </arguments>
+    </type>
+
+    <!-- Commands infrastructure -->
+    <virtualType name="PlatonPayCommandPool" type="Magento\Payment\Gateway\Command\CommandPool">
+        <arguments>
+            <argument name="commands" xsi:type="array">
+                <item name="authorize" xsi:type="string">PlatonPayAuthorizeCommand</item>
+                <item name="capture" xsi:type="string">PlatonPayCaptureCommand</item>
+                <item name="void" xsi:type="string">PlatonPayVoidCommand</item>
+            </argument>
+        </arguments>
+    </virtualType>
+
+    <!-- Authorize command -->
+    <virtualType name="PlatonPayAuthorizeCommand" type="Magento\Payment\Gateway\Command\GatewayCommand">
+        <arguments>
+            <argument name="requestBuilder" xsi:type="object">PlatonPayAuthorizationRequest</argument>
+            <argument name="handler" xsi:type="object">PlatonPayResponseHandlerComposite</argument>
+            <argument name="transferFactory" xsi:type="object">Platon\PlatonPay\Gateway\Http\TransferFactory</argument>
+            <argument name="client" xsi:type="object">Platon\PlatonPay\Gateway\Http\Client\ClientMock</argument>
+        </arguments>
+    </virtualType>
+
+    <!-- Authorization Request -->
+    <virtualType name="PlatonPayAuthorizationRequest" type="Magento\Payment\Gateway\Request\BuilderComposite">
+        <arguments>
+            <argument name="builders" xsi:type="array">
+                <item name="transaction" xsi:type="string">Platon\PlatonPay\Gateway\Request\AuthorizationRequest</item>
+                <item name="mockData" xsi:type="string">Platon\PlatonPay\Gateway\Request\MockDataRequest</item>
+            </argument>
+        </arguments>
+    </virtualType>
+    <type name="Platon\PlatonPay\Gateway\Request\AuthorizationRequest">
+        <arguments>
+            <argument name="config" xsi:type="object">PlatonPayConfig</argument>
+        </arguments>
+    </type>
+
+    <!-- Capture command -->
+    <virtualType name="PlatonPayCaptureCommand" type="Magento\Payment\Gateway\Command\GatewayCommand">
+        <arguments>
+            <argument name="requestBuilder" xsi:type="object">Platon\PlatonPay\Gateway\Request\CaptureRequest</argument>
+            <argument name="handler" xsi:type="object">Platon\PlatonPay\Gateway\Response\TxnIdHandler</argument>
+            <argument name="transferFactory" xsi:type="object">Platon\PlatonPay\Gateway\Http\TransferFactory</argument>
+            <argument name="validator" xsi:type="object">Platon\PlatonPay\Gateway\Validator\ResponseCodeValidator</argument>
+            <argument name="client" xsi:type="object">Platon\PlatonPay\Gateway\Http\Client\ClientMock</argument>
+        </arguments>
+    </virtualType>
+
+    <!-- Capture Request -->
+    <type name="Platon\PlatonPay\Gateway\Request\CaptureRequest">
+        <arguments>
+            <argument name="config" xsi:type="object">PlatonPayConfig</argument>
+        </arguments>
+    </type>
+
+    <!-- Void command -->
+    <virtualType name="PlatonPayVoidCommand" type="Magento\Payment\Gateway\Command\GatewayCommand">
+        <arguments>
+            <argument name="requestBuilder" xsi:type="object">Platon\PlatonPay\Gateway\Request\VoidRequest</argument>
+            <argument name="handler" xsi:type="object">Platon\PlatonPay\Gateway\Response\TxnIdHandler</argument>
+            <argument name="transferFactory" xsi:type="object">Platon\PlatonPay\Gateway\Http\TransferFactory</argument>
+            <argument name="validator" xsi:type="object">Platon\PlatonPay\Gateway\Validator\ResponseCodeValidator</argument>
+            <argument name="client" xsi:type="object">Platon\PlatonPay\Gateway\Http\Client\ClientMock</argument>
+        </arguments>
+    </virtualType>
+
+    <!-- Void Request -->
+    <type name="Platon\PlatonPay\Gateway\Request\VoidRequest">
+        <arguments>
+            <argument name="config" xsi:type="object">PlatonPayConfig</argument>
+        </arguments>
+    </type>
+
+    <!-- Response handlers -->
+    <virtualType name="PlatonPayResponseHandlerComposite" type="Magento\Payment\Gateway\Response\HandlerChain">
+        <arguments>
+            <argument name="handlers" xsi:type="array">
+                <item name="txnid" xsi:type="string">Platon\PlatonPay\Gateway\Response\TxnIdHandler</item>
+                <item name="fraud" xsi:type="string">Platon\PlatonPay\Gateway\Response\FraudHandler</item>
+            </argument>
+        </arguments>
+    </virtualType>
+
+    <!-- Value handlers infrastructure -->
+    <virtualType name="PlatonPayValueHandlerPool" type="Magento\Payment\Gateway\Config\ValueHandlerPool">
+        <arguments>
+            <argument name="handlers" xsi:type="array">
+                <item name="default" xsi:type="string">PlatonPayConfigValueHandler</item>
+            </argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="PlatonPayConfigValueHandler" type="Magento\Payment\Gateway\Config\ConfigValueHandler">
+        <arguments>
+            <argument name="configInterface" xsi:type="object">PlatonPayConfig</argument>
+        </arguments>
+    </virtualType>
+
+    <type name="Platon\PlatonPay\Block\Info">
+        <arguments>
+            <argument name="config" xsi:type="object">PlatonPayConfig</argument>
+        </arguments>
+    </type>
+
+    <!-- Callback Logger -->>
+    <type name="Platon\PlatonPay\Model\Logger\Handler">
+        <arguments>
+            <argument name="filesystem" xsi:type="object">Magento\Framework\Filesystem\Driver\File</argument>
+        </arguments>
+    </type>
+
+    <type name="Platon\PlatonPay\Model\Logger\Logger">
+        <arguments>
+            <argument name="name" xsi:type="string">PlatonLogger</argument>
+            <argument name="handlers"  xsi:type="array">
+                <item name="system" xsi:type="object">Platon\PlatonPay\Model\Logger\Handler</item>
+            </argument>
+        </arguments>
+    </type>  
+
+</config>

@@ -1,0 +1,21 @@
+{
+    "name": "alex79/platon-pay",
+    "description": "«Platon Pay» is an ideal solution for online stores accepting payments from cards: Visa, Mastercard, Prostir. Easy and convenient installation and configuration of the module will allow you to set up the ability to accept online card payments on your website in a few minutes.",
+    "require": {
+        "php": ">=7.1",
+        "magento/module-sales": "^102",
+        "magento/module-checkout": "^100.3",
+        "magento/module-payment": "^100.3"
+    },
+    "type": "magento2-module",
+    "version": "100.0.5",
+    "license": [
+        "GPLv2"
+    ],
+    "autoload": {
+        "files": [ "registration.php" ],
+        "psr-4": {
+            "Platon\\PlatonPay\\": ""
+        }
+    }
+}
